@@ -10,6 +10,9 @@ interface OutletMenuPageProps {
   }>;
 }
 
+export const dynamic = 'force-static';
+export const dynamicParams = true;
+
 export async function generateMetadata({ params }: OutletMenuPageProps): Promise<Metadata> {
   const { branch } = await params;
   const branchName = branch

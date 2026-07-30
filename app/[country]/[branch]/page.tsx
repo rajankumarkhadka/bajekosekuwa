@@ -12,6 +12,9 @@ interface BranchPageProps {
   }>;
 }
 
+export const dynamic = 'force-static';
+export const dynamicParams = true;
+
 export async function generateMetadata({ params }: BranchPageProps): Promise<Metadata> {
   const { country, branch } = await params;
   const branchName = branch
