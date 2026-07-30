@@ -1,4 +1,6 @@
 import articleService from "@/api/services/article.service";
+import vendorBranchService from "@/api/services/vendorBranch.service";
+import { slugifyBranchName } from "@/utils/outletMatcher";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -12,6 +14,35 @@ interface OutletBlogDetailProps {
     slug: string;
   }>;
 }
+
+export async function generateStaticParams() {
+  try {
+    const [articles, liveBranches] = await Promise.all([
+      articleService.getArticles(),
+      vendorBranchService.getBranches(),
+    ]);
+
+    const activeBranches =
+      liveBranches.length > 0
+        ? liveBranches.map((b) => ({
+            country: 'nepal',
+            branch: slugifyBranchName(b.name),
+          }))
+        : [{ country: 'nepal', branch: 'anamnagar' }];
+
+    return activeBranches.flatMap((b) =>
+      articles.map((article) => ({
+        country: b.country,
+        branch: b.branch,
+        slug: article.slug,
+      }))
+    );
+  } catch {
+    return [];
+  }
+}
+
+export const dynamicParams = true;
 
 export async function generateMetadata({ params }: OutletBlogDetailProps): Promise<Metadata> {
   const { branch, slug } = await params;
@@ -46,8 +77,8 @@ export default async function OutletBlogDetailView({ params }: OutletBlogDetailP
     cmsArticle.featured_image && typeof cmsArticle.featured_image === 'object'
       ? cmsArticle.featured_image.url
       : typeof cmsArticle.featured_image === 'string'
-      ? cmsArticle.featured_image
-      : '/images/icon.jpg';
+        ? cmsArticle.featured_image
+        : '/images/icon.jpg';
   const image = cleanImageUrl(rawImage, '/images/icon.jpg');
 
   const author =
@@ -56,16 +87,16 @@ export default async function OutletBlogDetailView({ params }: OutletBlogDetailP
         ? cmsArticle.author.name
         : 'Bajeko Team'
       : typeof cmsArticle.author === 'string' && cmsArticle.author !== 'Unknown'
-      ? cmsArticle.author
-      : 'Bajeko Team';
+        ? cmsArticle.author
+        : 'Bajeko Team';
 
   const rawDate = cmsArticle.created_at || cmsArticle.published_at;
   const date = rawDate
     ? new Date(rawDate).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
     : 'Recent';
 
   const htmlContent = cmsArticle.content || null;

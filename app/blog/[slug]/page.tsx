@@ -9,6 +9,19 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+export async function generateStaticParams() {
+  try {
+    const articles = await articleService.getArticles();
+    return articles.map((article) => ({
+      slug: article.slug,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export const dynamicParams = true;
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const cmsArticle = await articleService.getArticleBySlug(slug);
@@ -38,8 +51,8 @@ export default async function BlogDetailView({ params }: PageProps) {
     cmsArticle.featured_image && typeof cmsArticle.featured_image === 'object'
       ? cmsArticle.featured_image.url
       : typeof cmsArticle.featured_image === 'string'
-      ? cmsArticle.featured_image
-      : '/images/icon.jpg';
+        ? cmsArticle.featured_image
+        : '/images/icon.jpg';
   const image = cleanImageUrl(rawImage, '/images/icon.jpg');
 
   const author =
@@ -48,16 +61,16 @@ export default async function BlogDetailView({ params }: PageProps) {
         ? cmsArticle.author.name
         : 'Bajeko Team'
       : typeof cmsArticle.author === 'string' && cmsArticle.author !== 'Unknown'
-      ? cmsArticle.author
-      : 'Bajeko Team';
+        ? cmsArticle.author
+        : 'Bajeko Team';
 
   const rawDate = cmsArticle.created_at || cmsArticle.published_at;
   const date = rawDate
     ? new Date(rawDate).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
     : 'Recent';
 
   const htmlContent = cmsArticle.content || null;
