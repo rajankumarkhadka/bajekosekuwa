@@ -5,6 +5,8 @@ import AboutSection from '@/components/home/aboutsection';
 import SignatureSection from '@/components/home/SignatureSection';
 import StatsBar from '@/components/home/statsbar';
 
+import { generateBranchStaticParams } from '@/utils/staticParams';
+
 interface BranchPageProps {
   params: Promise<{
     country: string;
@@ -12,6 +14,7 @@ interface BranchPageProps {
   }>;
 }
 
+export const generateStaticParams = generateBranchStaticParams;
 export const dynamic = 'force-static';
 export const dynamicParams = true;
 

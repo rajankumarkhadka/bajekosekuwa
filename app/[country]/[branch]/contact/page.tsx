@@ -3,6 +3,8 @@ import Banner from '@/components/layout/banner';
 import ContactClient from '@/components/contact/ContactClient';
 import MaxWidthWrapper from '@/components/layout/MaxWidthWrapper';
 
+import { generateBranchStaticParams } from '@/utils/staticParams';
+
 interface OutletContactPageProps {
   params: Promise<{
     country: string;
@@ -10,6 +12,7 @@ interface OutletContactPageProps {
   }>;
 }
 
+export const generateStaticParams = generateBranchStaticParams;
 export const dynamic = 'force-static';
 export const dynamicParams = true;
 

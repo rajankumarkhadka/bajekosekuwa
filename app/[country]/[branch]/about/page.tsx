@@ -4,6 +4,8 @@ import Team from "@/components/about/team";
 import BajekoLegacy from "@/components/about/BajekoLegacy";
 import AboutClient from "@/components/about/aboutclient";
 
+import { generateBranchStaticParams } from '@/utils/staticParams';
+
 interface OutletAboutPageProps {
   params: Promise<{
     country: string;
@@ -11,6 +13,7 @@ interface OutletAboutPageProps {
   }>;
 }
 
+export const generateStaticParams = generateBranchStaticParams;
 export const dynamic = 'force-static';
 export const dynamicParams = true;
 

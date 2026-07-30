@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Banner from '@/components/layout/banner';
 import GalleryContainer from '@/components/gallery/GalleryContainer';
 
+import { generateBranchStaticParams } from '@/utils/staticParams';
+
 interface OutletGalleryPageProps {
   params: Promise<{
     country: string;
@@ -9,6 +11,7 @@ interface OutletGalleryPageProps {
   }>;
 }
 
+export const generateStaticParams = generateBranchStaticParams;
 export const dynamic = 'force-static';
 export const dynamicParams = true;
 

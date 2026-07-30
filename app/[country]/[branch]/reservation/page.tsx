@@ -4,6 +4,8 @@ import ChooseOutlet from "@/components/reservation/chooseoutlet";
 import BookingPoliciesAndFAQ from "@/components/reservation/BookingPoliciesAndFAQ";
 import MaxWidthWrapper from "@/components/layout/MaxWidthWrapper";
 
+import { generateBranchStaticParams } from '@/utils/staticParams';
+
 interface OutletReservationPageProps {
   params: Promise<{
     country: string;
@@ -11,6 +13,7 @@ interface OutletReservationPageProps {
   }>;
 }
 
+export const generateStaticParams = generateBranchStaticParams;
 export const dynamic = 'force-static';
 export const dynamicParams = true;
 

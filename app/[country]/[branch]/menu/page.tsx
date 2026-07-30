@@ -3,6 +3,8 @@ import Banner from "@/components/layout/banner";
 import MenuComponent from "@/components/menu";
 import MaxWidthWrapper from "@/components/layout/MaxWidthWrapper";
 
+import { generateBranchStaticParams } from '@/utils/staticParams';
+
 interface OutletMenuPageProps {
   params: Promise<{
     country: string;
@@ -10,6 +12,7 @@ interface OutletMenuPageProps {
   }>;
 }
 
+export const generateStaticParams = generateBranchStaticParams;
 export const dynamic = 'force-static';
 export const dynamicParams = true;
 

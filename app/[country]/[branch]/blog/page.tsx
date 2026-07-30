@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Banner from '@/components/layout/banner';
 import BlogClient from '@/components/ui/blog';
 
+import { generateBranchStaticParams } from '@/utils/staticParams';
+
 interface OutletBlogPageProps {
   params: Promise<{
     country: string;
@@ -9,6 +11,7 @@ interface OutletBlogPageProps {
   }>;
 }
 
+export const generateStaticParams = generateBranchStaticParams;
 export const dynamic = 'force-static';
 export const dynamicParams = true;
 
