@@ -64,7 +64,7 @@ const defaultOptions = {
  * Standard HTTP Client for main backend API endpoints.
  */
 export const http = ky.create({
-  prefix: process.env.NEXT_PUBLIC_API_URL,
+  prefix: process.env.NEXT_PUBLIC_API_URL || 'https://auth.bajekoshop.com/api/v1/public/',
   ...defaultOptions,
 });
 
@@ -72,7 +72,7 @@ export const http = ky.create({
  * Standard HTTP Client for CMS API endpoints (Bajeko Sekuwa CMS).
  */
 export const cmsHttp = ky.create({
-  prefix: process.env.NEXT_PUBLIC_CMS_API_URL,
+  prefix: process.env.NEXT_PUBLIC_CMS_API_URL || 'https://cms.bajekoshop.com/api/v1/public',
   ...defaultOptions,
 });
 
