@@ -26,6 +26,7 @@ export async function generateStaticParams() {
   return [{ country: 'nepal', branch: 'anamnagar' }];
 }
 
+export const dynamic = 'force-static';
 export const dynamicParams = true;
 
 export default async function BranchLayout({ children, params }: BranchLayoutProps) {
