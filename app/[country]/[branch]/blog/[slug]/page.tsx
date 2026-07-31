@@ -25,9 +25,9 @@ export async function generateStaticParams() {
     const activeBranches =
       liveBranches.length > 0
         ? liveBranches.map((b) => ({
-            country: 'nepal',
-            branch: slugifyBranchName(b.name),
-          }))
+          country: 'nepal',
+          branch: slugifyBranchName(b.name),
+        }))
         : [{ country: 'nepal', branch: 'anamnagar' }];
 
     return activeBranches.flatMap((b) =>

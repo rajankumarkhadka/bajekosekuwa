@@ -49,7 +49,22 @@ function getAuthorName(author?: { name?: string } | string): string {
 export default function BlogClient() {
     const [selectedCategoryId, setSelectedCategoryId] = useState("All");
     const params = useParams();
-    const { selectedOutlet } = useOutlet();
+    const { selectedOutlet, outlets } = useOutlet();
+
+    // Resolve branch UUID from URL route params or selectedOutlet
+    const activeBranchId = useMemo(() => {
+        const branchParam = typeof params?.branch === 'string' ? params.branch : null;
+        if (branchParam && outlets && outlets.length > 0) {
+            const cleanParam = branchParam.toLowerCase().trim();
+            const found = outlets.find((o) =>
+                o.id.toLowerCase() === cleanParam ||
+                o.name.toLowerCase().trim() === cleanParam ||
+                o.name.toLowerCase().replace(/\s+/g, '-').trim() === cleanParam
+            );
+            if (found?.id) return found.id;
+        }
+        return selectedOutlet?.id || undefined;
+    }, [params, outlets, selectedOutlet]);
 
     // Helper to resolve canonical post URL adhering to active outlet/country context
     const getPostUrl = (slug: string) => {
@@ -66,15 +81,39 @@ export default function BlogClient() {
     };
 
     const queryParams = useMemo(() => {
-        return selectedCategoryId !== "All" ? { category_id: selectedCategoryId } : undefined;
-    }, [selectedCategoryId]);
+        const query: Record<string, string> = {};
+        if (selectedCategoryId !== "All") {
+            query.category_id = selectedCategoryId;
+        }
+        if (activeBranchId) {
+            query.branch_id = activeBranchId;
+        }
+        return Object.keys(query).length > 0 ? query : undefined;
+    }, [selectedCategoryId, activeBranchId]);
 
     const { data: apiArticles, isLoading } = useArticles(queryParams);
     const { data: apiCategories } = useCategories();
 
+    const categoryMap = useMemo(() => {
+        const map = new Map<string, string>();
+        if (apiCategories && Array.isArray(apiCategories)) {
+            apiCategories.forEach((cat) => {
+                if (cat.id && cat.name) {
+                    map.set(cat.id, cat.name);
+                    map.set(cat.id.toLowerCase(), cat.name);
+                }
+                if (cat.slug && cat.name) {
+                    map.set(cat.slug, cat.name);
+                    map.set(cat.slug.toLowerCase(), cat.name);
+                }
+            });
+        }
+        return map;
+    }, [apiCategories]);
+
     const categoriesList = useMemo(() => {
         const list: { id: string; name: string }[] = [{ id: "All", name: "All" }];
-        
+
         if (apiCategories && apiCategories.length > 0) {
             apiCategories.forEach((cat) => {
                 if (cat.id && cat.name) {
@@ -101,23 +140,31 @@ export default function BlogClient() {
             const rawDate = art.created_at || art.published_at || art.updated_at;
             const formattedDate = rawDate
                 ? new Date(rawDate).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                  })
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                })
                 : 'Recent';
 
-            let categoryName = 'Articles';
-            let categoryId = '';
-            if (typeof art.category === 'string') {
-                categoryName = art.category;
+            let categoryId = art.category_id || '';
+            if (!categoryId && typeof art.category === 'object' && art.category?.id) {
+                categoryId = art.category.id;
+            } else if (!categoryId && typeof art.category === 'string') {
                 categoryId = art.category;
-            } else if (typeof art.category === 'object' && art.category) {
-                categoryName = art.category.name || 'Articles';
-                categoryId = art.category.id || '';
             }
-            if (art.category_id) {
-                categoryId = art.category_id;
+
+            let categoryName = 'Articles';
+            if (typeof art.category === 'object' && art.category?.name) {
+                categoryName = art.category.name;
+            } else if (categoryId && categoryMap.has(categoryId)) {
+                categoryName = categoryMap.get(categoryId)!;
+            } else if (typeof art.category === 'string' && art.category.trim()) {
+                const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(art.category.trim());
+                if (!isUuid) {
+                    categoryName = art.category.trim();
+                } else if (categoryMap.has(art.category.trim())) {
+                    categoryName = categoryMap.get(art.category.trim())!;
+                }
             }
 
             const articleSlug = art.slug || art.id || '';
@@ -137,11 +184,34 @@ export default function BlogClient() {
                 customUrl: getPostUrl(articleSlug),
             };
         });
-    }, [apiArticles, params, selectedOutlet]);
+    }, [apiArticles, categoryMap, params, selectedOutlet]);
 
     const filteredPosts = useMemo(() => {
-        return mappedPosts;
-    }, [mappedPosts]);
+        if (selectedCategoryId === "All") return mappedPosts;
+        if (!mappedPosts || mappedPosts.length === 0) return [];
+
+        const activeCategoryObj = apiCategories?.find(
+            (c) => c.id === selectedCategoryId || c.slug === selectedCategoryId || c.name === selectedCategoryId
+        );
+
+        const targetId = (activeCategoryObj?.id || selectedCategoryId).toLowerCase();
+        const targetName = (activeCategoryObj?.name || selectedCategoryId).toLowerCase();
+        const targetSlug = (activeCategoryObj?.slug || selectedCategoryId).toLowerCase();
+
+        const matches = mappedPosts.filter((post) => {
+            const postCatLower = post.category.toLowerCase();
+            const postCatIdLower = post.categoryId.toLowerCase();
+
+            return (
+                postCatIdLower === targetId ||
+                postCatIdLower === targetSlug ||
+                postCatLower === targetName ||
+                postCatLower === targetSlug
+            );
+        });
+
+        return matches.length > 0 ? matches : mappedPosts;
+    }, [mappedPosts, selectedCategoryId, apiCategories]);
 
     const featuredPost = mappedPosts[0];
     const regularPosts = selectedCategoryId === "All"
@@ -257,6 +327,11 @@ export default function BlogClient() {
                                         className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
                                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                     />
+                                    <div className="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-md border border-gray-100 shadow-xs z-10">
+                                        <span className="font-syne text-[9px] xs:text-[10px] tracking-wider uppercase text-[#C4010F] font-bold">
+                                            {post.category}
+                                        </span>
+                                    </div>
                                 </motion.div>
 
                                 <div className="space-y-3 xs:space-y-4 sm:space-y-4 flex-grow flex flex-col justify-between px-1">

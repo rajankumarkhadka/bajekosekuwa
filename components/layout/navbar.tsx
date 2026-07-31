@@ -32,7 +32,7 @@ export default function Navbar() {
 
     const navItems = [
         { href: homeHref, label: "Home" },
-        { href: aboutHref, label: "About Us" },
+        { href: aboutHref, label: "About" },
         { href: blogHref, label: "Blog" },
         { href: galleryHref, label: "Gallery" },
         { href: contactHref, label: "Contact" },
@@ -118,9 +118,6 @@ export default function Navbar() {
                                                 )}
                                             >
                                                 {item.label}
-                                                {active && (
-                                                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#C4010F] rounded-full" />
-                                                )}
                                             </Link>
                                         </li>
                                     );

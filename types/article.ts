@@ -39,6 +39,8 @@ export interface ArticleItem {
 export interface GetArticlesQueryParams {
   category?: string;
   category_id?: string;
+  branch_id?: string;
+  outlet_id?: string;
   search?: string;
   page?: number;
   page_size?: number;
