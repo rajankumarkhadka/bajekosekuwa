@@ -5,6 +5,7 @@ export * from './gallery';
 export * from './vendorBranch';
 export * from './testimonial';
 export * from './contact';
+export * from './menu';
 
 export interface BranchBlog {
   id: string;

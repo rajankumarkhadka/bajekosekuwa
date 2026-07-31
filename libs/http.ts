@@ -46,7 +46,7 @@ const defaultOptions = {
     ],
     afterResponse: [
       async ({ request, response }: { request: Request; response: Response }) => {
-        if (!response.ok) {
+        if (!response.ok && response.status !== 404) {
           const errorData = await response.clone().json().catch(() => ({}));
           console.warn('HTTP Request Failed:', {
             url: request.url,
@@ -73,6 +73,14 @@ export const http = ky.create({
  */
 export const cmsHttp = ky.create({
   prefix: process.env.NEXT_PUBLIC_CMS_API_URL || 'https://cms.bajekoshop.com/api/v1/public',
+  ...defaultOptions,
+});
+
+/**
+ * Standard HTTP Client for E-commerce API endpoints (Bajeko Sekuwa E-commerce).
+ */
+export const ecommerceHttp = ky.create({
+  prefix: process.env.NEXT_PUBLIC_ECOMMERCE_API_URL || 'https://ecommerce.bajekoshop.com/api/v1/public/',
   ...defaultOptions,
 });
 

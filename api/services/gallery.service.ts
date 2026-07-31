@@ -1,19 +1,26 @@
-import { cmsHttp } from '@/libs/http';
+import { cmsHttp, cleanParams } from '@/libs/http';
 import type {
-  CmsGalleryItem,
-  CmsGalleryListResponse,
   BranchGalleryItem,
   GetBranchGalleryQueryParams,
 } from '@/types';
 
 export const galleryService = {
-  async getGalleries(): Promise<CmsGalleryItem[]> {
+  async getGalleries(branchId?: string | null): Promise<any[]> {
     try {
+      const validBranchId = branchId?.trim();
+      const searchParams = validBranchId ? cleanParams({ branch_id: validBranchId }) : undefined;
       const response = await cmsHttp
-        .get('galleries')
-        .json<CmsGalleryListResponse>();
+        .get('galleries', { searchParams })
+        .json<any>();
 
-      return response.data || [];
+      if (!response) return [];
+      if (Array.isArray(response)) return response;
+      if (Array.isArray(response.results)) return response.results;
+      if (Array.isArray(response.data)) return response.data;
+      if (Array.isArray(response.data?.results)) return response.data.results;
+      if (Array.isArray(response.items)) return response.items;
+      if (Array.isArray(response.data?.items)) return response.data.items;
+      return [];
     } catch (err) {
       console.warn('CMS Galleries API warning:', err);
       return [];
@@ -24,34 +31,40 @@ export const galleryService = {
     branchId?: string | null,
     params?: GetBranchGalleryQueryParams
   ): Promise<BranchGalleryItem[]> {
-    const galleries = await this.getGalleries();
     const validBranchId = branchId?.trim();
-
-    const filteredGalleries = validBranchId
-      ? galleries.filter(
-          (g) =>
-            !g.branch_ids ||
-            g.branch_ids.length === 0 ||
-            g.branch_ids.includes(validBranchId)
-        )
-      : galleries;
+    const rawGalleries = await this.getGalleries(validBranchId);
 
     const items: BranchGalleryItem[] = [];
 
-    filteredGalleries.forEach((gallery) => {
-      if (gallery.images && Array.isArray(gallery.images)) {
-        gallery.images.forEach((img) => {
+    rawGalleries.forEach((gallery: any) => {
+      // Case 1: Gallery folder containing `images` array
+      if (gallery.images && Array.isArray(gallery.images) && gallery.images.length > 0) {
+        gallery.images.forEach((img: any) => {
           items.push({
-            id: img.id,
-            branch_id: validBranchId || undefined,
-            title: img.caption || gallery.name,
-            description: gallery.name,
-            image: img.image,
-            image_url: img.image,
-            category: gallery.name ? gallery.name.trim() : 'General',
-            created_at: gallery.created_at,
-            updated_at: gallery.updated_at,
+            id: img.id || `${gallery.id}-${items.length}`,
+            branch_id: validBranchId || img.branch_id || gallery.branch_id || undefined,
+            title: img.caption || img.title || gallery.name || 'Gallery Item',
+            description: img.description || gallery.description || gallery.name || '',
+            image: img.image || img.image_url || img.url || '',
+            image_url: img.image_url || img.image || img.url || '',
+            category: gallery.name ? gallery.name.trim() : (img.category || 'General'),
+            created_at: img.created_at || gallery.created_at,
+            updated_at: img.updated_at || gallery.updated_at,
           });
+        });
+      }
+      // Case 2: Gallery item is a single image object
+      else if (gallery.image || gallery.image_url || gallery.url) {
+        items.push({
+          id: gallery.id || `gallery-${items.length}`,
+          branch_id: validBranchId || gallery.branch_id || undefined,
+          title: gallery.title || gallery.name || gallery.caption || 'Gallery Item',
+          description: gallery.description || gallery.name || '',
+          image: gallery.image || gallery.image_url || gallery.url || '',
+          image_url: gallery.image_url || gallery.image || gallery.url || '',
+          category: gallery.category || gallery.name || 'General',
+          created_at: gallery.created_at,
+          updated_at: gallery.updated_at,
         });
       }
     });

@@ -20,6 +20,10 @@ export const queryKeys = {
     list: (params?: GetVendorBranchesQueryParams) => ['vendor-branches', 'list', params] as const,
     detail: (id: string) => ['vendor-branches', 'detail', id] as const,
   },
+  menu: {
+    all: ['branch-menu'] as const,
+    byBranch: (branchId?: string | null) => ['branch-menu', branchId] as const,
+  },
 };
 
 export default queryKeys;
