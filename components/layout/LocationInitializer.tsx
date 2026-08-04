@@ -14,14 +14,7 @@ export default function LocationInitializer() {
   useEffect(() => {
     if (isLoading || outlets.length === 0 || hasTriggeredRef.current) return;
 
-    const alreadyPrompted = sessionStorage.getItem('location_permission_attempted');
-    if (alreadyPrompted) return;
-
-    hasTriggeredRef.current = true;
-    sessionStorage.setItem('location_permission_attempted', 'true');
-
-    // Prompt user for location permission upon website opening
-    requestUserLocation().then((nearestOutlet) => {
+    const handleLocationResolution = (nearestOutlet: any) => {
       if (nearestOutlet) {
         // If location is GRANTED, navigate from global pages to nearest outlet page
         const isGlobalPage =
@@ -39,8 +32,29 @@ export default function LocationInitializer() {
           router.push(targetUrl);
         }
       }
-      // If location DENIED, user remains on global pages (app/ pages)
-    });
+    };
+
+    // If permission was already granted in browser settings, auto-detect location immediately
+    if (typeof window !== 'undefined' && 'permissions' in navigator) {
+      navigator.permissions
+        .query({ name: 'geolocation' })
+        .then((permissionStatus) => {
+          if (permissionStatus.state === 'granted' && !hasTriggeredRef.current) {
+            hasTriggeredRef.current = true;
+            requestUserLocation().then(handleLocationResolution);
+          }
+        })
+        .catch(() => {});
+    }
+
+    const alreadyPrompted = sessionStorage.getItem('location_permission_attempted');
+    if (alreadyPrompted) return;
+
+    hasTriggeredRef.current = true;
+    sessionStorage.setItem('location_permission_attempted', 'true');
+
+    // Prompt user for location permission upon website opening
+    requestUserLocation().then(handleLocationResolution);
   }, [outlets, isLoading, pathname, requestUserLocation, router]);
 
   return null;

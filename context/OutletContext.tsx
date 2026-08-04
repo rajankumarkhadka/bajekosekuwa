@@ -1,8 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { VendorBranch, Country } from '@/types';
-import { useVendorBranches } from '@/api/hooks/useVendorBranch';
+import { useInfiniteVendorBranches } from '@/api/hooks/useVendorBranch';
 import { useDebounce } from '@/api/hooks/useDebounce';
 import { calculateDistanceKm } from '@/utils/distance';
 import { formatFlagUrl } from '@/utils/flag';
@@ -22,6 +22,8 @@ interface OutletContextType {
   isLocating: boolean;
   locationError: string | null;
   isLoading: boolean;
+  isFetchingNextPage: boolean;
+  hasNextPage: boolean;
   requestUserLocation: () => Promise<VendorBranch | null>;
   clearSelectedOutlet: () => void;
   loadMoreOutlets: () => void;
@@ -43,21 +45,32 @@ const DEFAULT_NEPAL_COUNTRY: Country = {
 };
 
 export function OutletProvider({ children }: { children: React.ReactNode }) {
-  const [pageSize, setPageSize] = useState<number>(20);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCountryId, setSelectedCountryId] = useState<string | null>(null);
 
   // Debounce search query to prevent firing API requests on every single keystroke
   const debouncedSearch = useDebounce(searchQuery, 350);
 
-  const { data: apiBranches, isLoading } = useVendorBranches({
-    page_size: pageSize,
+  const {
+    data: infiniteData,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteVendorBranches({
+    page_size: 10,
     search: debouncedSearch.trim() || undefined,
   });
 
-  const loadMoreOutlets = () => {
-    setPageSize((prev) => Math.min(prev + 10, 100));
-  };
+  const apiBranches = useMemo(() => {
+    return infiniteData?.pages.flat() ?? [];
+  }, [infiniteData]);
+
+  const loadMoreOutlets = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Process dynamic outlets fetched from real live API
   const rawOutlets = useMemo(() => {
@@ -100,7 +113,7 @@ export function OutletProvider({ children }: { children: React.ReactNode }) {
   const outlets = useMemo(() => {
     if (!userLocation) return rawOutlets;
 
-    return rawOutlets.map((outlet) => {
+    const list = rawOutlets.map((outlet) => {
       const dist = calculateDistanceKm(
         userLocation.lat,
         userLocation.lng,
@@ -112,6 +125,8 @@ export function OutletProvider({ children }: { children: React.ReactNode }) {
         distance_km: dist,
       };
     });
+
+    return list.sort((a, b) => (a.distance_km ?? 99999) - (b.distance_km ?? 99999));
   }, [rawOutlets, userLocation]);
 
   // Initialize selected outlet from localStorage (or keep null for Global view)
@@ -226,6 +241,8 @@ export function OutletProvider({ children }: { children: React.ReactNode }) {
         isLocating,
         locationError,
         isLoading,
+        isFetchingNextPage: Boolean(isFetchingNextPage),
+        hasNextPage: Boolean(hasNextPage),
         requestUserLocation,
         clearSelectedOutlet,
         loadMoreOutlets,

@@ -24,7 +24,6 @@ interface OutletSelectorModalProps {
   onClose: () => void;
 }
 
-const INITIAL_VISIBLE_COUNT = 2; // Shows initial 2 cards as in screenshot, with + Show X more outlets button
 
 function isCountryMatch(countryName: string | undefined | null, category: string): boolean {
   if (!countryName) return false;
@@ -64,14 +63,20 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
     isLocating,
     locationError,
     isLoading,
+    isFetchingNextPage,
+    hasNextPage,
     requestUserLocation,
     loadMoreOutlets,
   } = useOutlet();
 
   const [activeCategory, setActiveCategory] = useState<string>('All');
-  const [showAll, setShowAll] = useState(false);
 
-
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop - clientHeight < 80 && hasNextPage && !isFetchingNextPage && !isLoading) {
+      loadMoreOutlets();
+    }
+  };
 
   // Dynamic category items containing label & country flag URL
   const categoryItems = useMemo(() => {
@@ -154,19 +159,8 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
     return result;
   }, [outlets, countries, activeCategory, userLocation, searchQuery]);
 
-  // Limit displayed outlets unless "Show more" is clicked
-  const visibleOutlets = useMemo(() => {
-    if (showAll || searchQuery.trim() || activeCategory !== 'All') {
-      return filteredOutlets;
-    }
-    return filteredOutlets.slice(0, INITIAL_VISIBLE_COUNT);
-  }, [filteredOutlets, showAll, searchQuery, activeCategory]);
-
-  const hiddenCount = filteredOutlets.length - visibleOutlets.length;
-
   const handleSelectCategory = (cat: string) => {
     setActiveCategory(cat);
-    setShowAll(true);
 
     const foundCountry =
       countries.find((c) => isCountryMatch(c.name, cat)) ||
@@ -176,13 +170,6 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
       setSelectedCountryId(foundCountry.id);
     } else if (cat === 'All') {
       setSelectedCountryId(null);
-    }
-  };
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (scrollHeight - scrollTop - clientHeight < 50 && !isLoading) {
-      loadMoreOutlets();
     }
   };
 
@@ -197,7 +184,6 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
     const nearest = await requestUserLocation();
     if (nearest) {
       handleSelectCategory('All');
-      setShowAll(true);
     }
   };
 
@@ -219,9 +205,9 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
             <h2 className="text-xs sm:text-sm font-extrabold text-gray-500 tracking-wider uppercase">
               BAJEKO SEKUWA OUTLETS
             </h2>
-            <span className="bg-red-50 text-[#C4010F] text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+            {/* <span className="bg-red-50 text-[#C4010F] text-[10px] font-bold px-2.5 py-0.5 rounded-full">
               {outlets.length} Locations
-            </span>
+            </span> */}
           </div>
           <button
             onClick={onClose}
@@ -325,7 +311,7 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
           onScroll={handleScroll}
           className="px-5 py-3 overflow-y-auto flex-1 bg-white space-y-3"
         >
-          {isLoading && visibleOutlets.length === 0 ? (
+          {isLoading && filteredOutlets.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-gray-400">
               <Loader2 className="w-6 h-6 animate-spin text-[#C4010F] mb-1.5" />
               <p className="text-xs font-medium">Loading outlets...</p>
@@ -338,14 +324,14 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {visibleOutlets.map((outlet) => {
+              {filteredOutlets.map((outlet, index) => {
                 const isSelected = selectedOutlet?.id === outlet.id;
                 const displayImage = outlet.image || '/images/icon.jpg';
                 const countryName = outlet.country?.name;
 
                 return (
                   <div
-                    key={outlet.id}
+                    key={`${outlet.id}-${index}`}
                     onClick={() => handleSelectOutlet(outlet)}
                     className={`bg-white rounded-xl border transition-all duration-200 overflow-hidden flex flex-col cursor-pointer group ${isSelected
                         ? 'border-[#C4010F] ring-1 ring-[#C4010F] shadow-sm'
@@ -365,7 +351,9 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
                       <div className="bg-black/70 backdrop-blur-md text-white text-[10px] font-mono px-2.5 py-0.5 rounded-full flex items-center gap-1 absolute bottom-2 right-2 border border-white/10">
                         <Navigation className="w-2.5 h-2.5 text-amber-400 rotate-45" />
                         <span>
-                          {outlet.latitude.toFixed(2)}°, {outlet.longitude.toFixed(2)}°
+                          {outlet.latitude != null && outlet.longitude != null
+                            ? `${Number(outlet.latitude).toFixed(2)}°, ${Number(outlet.longitude).toFixed(2)}°`
+                            : 'N/A'}
                         </span>
                       </div>
                     </div>
@@ -388,9 +376,11 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
                       <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#E79C1E] pt-0.5">
                         <Navigation className="w-3.5 h-3.5 shrink-0 rotate-45 text-[#E79C1E]" />
                         <span>
-                          {outlet.distance_km !== null
+                          {outlet.distance_km !== null && outlet.distance_km !== undefined
                             ? `${outlet.distance_km} km away`
-                            : 'GPS location available'}
+                            : userLocation
+                            ? 'Distance calculated'
+                            : 'Allow location access for distance'}
                         </span>
                       </div>
                     </div>
@@ -400,25 +390,28 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
             </div>
           )}
 
-          {hiddenCount > 0 && !showAll && (
+          {/* Loader Spinner when fetching next page */}
+          {isFetchingNextPage && (
+            <div className="flex items-center justify-center py-4 text-gray-500 gap-2">
+              <Loader2 className="w-4 h-4 animate-spin text-[#C4010F]" />
+              <span className="text-xs font-semibold text-gray-600">Loading 10 more outlets...</span>
+            </div>
+          )}
+
+          {/* Manual Load More Button if next page available and not fetching */}
+          {hasNextPage && !isFetchingNextPage && (
             <button
-              onClick={() => {
-                setShowAll(true);
-                loadMoreOutlets();
-              }}
-              className="w-full py-2.5 border border-dashed border-red-200 hover:border-[#C4010F] text-[#C4010F] bg-red-50/20 hover:bg-red-50 rounded-xl font-bold text-xs transition-all text-center cursor-pointer mt-3"
+              onClick={() => loadMoreOutlets()}
+              className="w-full py-2.5 border border-dashed border-red-200 hover:border-[#C4010F] text-[#C4010F] bg-red-50/20 hover:bg-red-50 rounded-xl font-bold text-xs transition-all text-center cursor-pointer mt-3 flex items-center justify-center gap-1.5"
             >
-              + Show {hiddenCount} more outlets
+              <span>+ Load 10 more outlets</span>
             </button>
           )}
 
-          {showAll && filteredOutlets.length > INITIAL_VISIBLE_COUNT && (
-            <button
-              onClick={() => setShowAll(false)}
-              className="w-full py-2 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl font-bold text-[11px] transition-all text-center cursor-pointer mt-3"
-            >
-              Show fewer outlets
-            </button>
+          {!hasNextPage && filteredOutlets.length > 0 && !isLoading && (
+            <p className="text-[11px] text-center text-gray-400 font-medium py-2">
+              All {filteredOutlets.length} outlets loaded
+            </p>
           )}
         </div>
       </motion.div>

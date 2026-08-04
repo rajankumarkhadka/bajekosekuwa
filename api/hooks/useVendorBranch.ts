@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import vendorBranchService from '@/api/services/vendorBranch.service';
 import { queryKeys } from '@/api/queryKeys';
 import type { GetVendorBranchesQueryParams } from '@/types';
@@ -9,6 +9,24 @@ export function useVendorBranches(params?: GetVendorBranchesQueryParams) {
   return useQuery({
     queryKey: queryKeys.vendorBranches.list(queryParams),
     queryFn: () => vendorBranchService.getBranches(queryParams),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useInfiniteVendorBranches(params?: Omit<GetVendorBranchesQueryParams, 'page'>) {
+  const queryParams = { page_size: 10, ...params };
+
+  return useInfiniteQuery({
+    queryKey: ['vendorBranches', 'infinite', queryParams],
+    queryFn: ({ pageParam = 1 }) =>
+      vendorBranchService.getBranches({ ...queryParams, page: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < (queryParams.page_size || 10)) {
+        return undefined;
+      }
+      return allPages.length + 1;
+    },
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -30,4 +48,5 @@ export function useVendorBranchDetail(identifier: string) {
     gcTime: 60 * 60 * 1000,
   });
 }
+
 
