@@ -21,11 +21,13 @@ export function useOpenBranches(params?: GetVendorBranchesQueryParams) {
   };
 }
 
-export function useVendorBranchDetail(id: string) {
+export function useVendorBranchDetail(identifier: string) {
   return useQuery({
-    queryKey: queryKeys.vendorBranches.detail(id),
-    queryFn: () => vendorBranchService.getBranchById(id),
-    enabled: Boolean(id),
-    staleTime: 10 * 60 * 1000,
+    queryKey: queryKeys.vendorBranches.detail(identifier),
+    queryFn: () => vendorBranchService.getBranchByName(identifier),
+    enabled: Boolean(identifier),
+    staleTime: Infinity,
+    gcTime: 60 * 60 * 1000,
   });
 }
+

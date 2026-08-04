@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { VendorBranch, Country } from '@/types';
 import { useVendorBranches } from '@/api/hooks/useVendorBranch';
+import { useDebounce } from '@/api/hooks/useDebounce';
 import { calculateDistanceKm } from '@/utils/distance';
 import { formatFlagUrl } from '@/utils/flag';
 
@@ -13,6 +14,10 @@ interface OutletContextType {
   setSelectedOutlet: (outlet: VendorBranch | null) => void;
   selectedCountry: Country | null;
   setSelectedCountry: (country: Country | null) => void;
+  selectedCountryId: string | null;
+  setSelectedCountryId: (id: string | null) => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
   userLocation: { lat: number; lng: number } | null;
   isLocating: boolean;
   locationError: string | null;
@@ -38,14 +43,20 @@ const DEFAULT_NEPAL_COUNTRY: Country = {
 };
 
 export function OutletProvider({ children }: { children: React.ReactNode }) {
-  const [pageSize, setPageSize] = useState<number>(10);
+  const [pageSize, setPageSize] = useState<number>(20);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedCountryId, setSelectedCountryId] = useState<string | null>(null);
+
+  // Debounce search query to prevent firing API requests on every single keystroke
+  const debouncedSearch = useDebounce(searchQuery, 350);
 
   const { data: apiBranches, isLoading } = useVendorBranches({
     page_size: pageSize,
+    search: debouncedSearch.trim() || undefined,
   });
 
   const loadMoreOutlets = () => {
-    setPageSize((prev) => Math.min(prev + 20, 100));
+    setPageSize((prev) => Math.min(prev + 10, 100));
   };
 
   // Process dynamic outlets fetched from real live API
@@ -207,6 +218,10 @@ export function OutletProvider({ children }: { children: React.ReactNode }) {
         setSelectedOutlet,
         selectedCountry,
         setSelectedCountry,
+        selectedCountryId,
+        setSelectedCountryId,
+        searchQuery,
+        setSearchQuery,
         userLocation,
         isLocating,
         locationError,

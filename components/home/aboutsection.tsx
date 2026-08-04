@@ -43,7 +43,7 @@ export default function AboutSection() {
                 description="As we celebrate our legacy, we're thrilled to share the flavors of Nepal with the world. Bajeko Sekuwa now proudly boasts 7 international outlets in New York, Dallas, Colorado, Melbourne, Sydney and Dubai."
                 image=""
                 className="text-start justify-start"
-                titleClassName="!text-[72px] !font-normal !leading-[68px]"
+                titleClassName=" md:!text-[72px] !text-[38px]  !font-normal ms:!leading-[68px]"
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-6">

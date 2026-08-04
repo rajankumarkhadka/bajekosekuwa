@@ -107,7 +107,7 @@ export default function BookingPoliciesAndFAQ() {
       </div>
 
       {/* 2. COMMON QUESTIONS FAQ ACCORDION (Matching screenshot) */}
-      <div className="bg-gray-50/60 border border-gray-100 rounded-3xl p-6 sm:p-8 flex flex-col gap-5">
+      <div className="bg-gray-50/60 border border-gray-100 rounded-lg p-6 sm:p-8 flex flex-col gap-5">
         <h3 className="text-xs uppercase font-extrabold tracking-widest text-gray-400">
           COMMON QUESTIONS
         </h3>

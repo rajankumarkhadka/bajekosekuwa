@@ -38,7 +38,7 @@ export default function Banner({
           )}
 
           <h1
-            className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-serif text-gray-900 leading-tight md:leading-[1.1] lg:leading-[0.95] tracking-tight ${titleClassName} ${!titleBreak ? "whitespace-nowrap" : ""
+            className={`text-2xl  md:text-6xl lg:text-7xl xl:text-8xl font-serif text-gray-900 leading-tight md:leading-[1.1] lg:leading-[0.95] tracking-tight ${titleClassName} ${!titleBreak ? "whitespace-nowrap" : ""
               }`}
           >
             {titleBreak ? (

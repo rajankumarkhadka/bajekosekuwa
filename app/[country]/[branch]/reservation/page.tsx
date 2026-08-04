@@ -43,7 +43,8 @@ export default async function OutletReservationPage({ params }: OutletReservatio
           title={["Book Your Table at", `${formattedBranch}`]}
           description={`Reserve a table for family, friends, or private gatherings at Bajeko Sekuwa ${formattedBranch}.`}
           image="/images/bajelogo.png"
-          titleBreak={false}
+          titleBreak={true}
+          className=''
         />
       </div>
 

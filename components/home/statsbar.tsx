@@ -51,12 +51,12 @@ export default function StatsBar() {
                     subtitle="Our Milestones"
                     title={["A Legacy Built on", "Trust"]}
                     titleBreak={false}
-                    titleClassName="text-[70px] font-normal leading-[68px]"
+                    titleClassName="md:text-[70px] font-normal leading-[68px]"
                     image=""
                     description=""
                 />
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-7 mt-14">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-7 md:mt-14">
                     {stats.map((stat, i) => (
                         <motion.div
                             key={stat.label}

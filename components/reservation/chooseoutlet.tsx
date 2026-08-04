@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VendorBranch } from "@/types";
+import { getOutletUrlPath } from '@/utils/outletMatcher';
 
 // Pre-defined time slots
 const TIME_SLOTS = [
@@ -42,6 +44,7 @@ const TIME_SLOTS = [
 ];
 
 export default function ChooseOutlet() {
+  const router = useRouter();
   const { outlets, selectedOutlet, setSelectedOutlet } = useOutlet();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,6 +70,13 @@ export default function ChooseOutlet() {
     },
   });
 
+  // Sync form branch_id whenever selectedOutlet changes
+  useEffect(() => {
+    if (selectedOutlet?.id) {
+      setValue('branch_id', selectedOutlet.id, { shouldValidate: true });
+    }
+  }, [selectedOutlet, setValue]);
+
   // Filtered outlets based on search string
   const filteredOutlets = useMemo(() => {
     if (!searchQuery.trim()) return outlets;
@@ -83,6 +93,8 @@ export default function ChooseOutlet() {
     setSelectedOutlet(outlet);
     setValue('branch_id', outlet.id, { shouldValidate: true });
     setIsModalOpen(false);
+    const targetUrl = getOutletUrlPath(outlet, '/reservation');
+    router.push(targetUrl);
   };
 
   const mutation = useMutation({

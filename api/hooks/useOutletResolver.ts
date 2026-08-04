@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useOutlet } from '@/context/OutletContext';
+import { useBranchDetails } from '@/context/BranchDetailsContext';
 import { matchBranchId, slugifyBranchName } from '@/utils/outletMatcher';
 import { VendorBranch } from '@/types';
 
@@ -20,22 +21,29 @@ export interface OutletResolverResult {
 
 /**
  * Centralized Branch Resolver Hook.
- * Validates and matches an incoming branch ID or route parameter against server data
- * from /api/v1/public/branches in one place before passing data to pages (Gallery, About, Blog, etc.).
+ * Validates and matches an incoming branch ID or route parameter against branch details
+ * from BranchDetailsContext or server branches list.
  *
  * @param targetIdentifier - Optional UUID, branch name, or slug. Defaults to active selected outlet if omitted.
  */
 export function useOutletResolver(targetIdentifier?: string | null): OutletResolverResult {
   const { outlets, selectedOutlet, isLoading } = useOutlet();
+  const { branch: contextBranch } = useBranchDetails();
 
   const matchedBranch = useMemo(() => {
-    // 1. If a target identifier is provided, match against server branches
+    // 1. If inside BranchDetailsProvider and target is omitted or matches context branch, use context branch
+    if (contextBranch) {
+      if (!targetIdentifier || matchBranchId([contextBranch], targetIdentifier)) {
+        return contextBranch;
+      }
+    }
+    // 2. If a target identifier is provided, match against server branches
     if (targetIdentifier && targetIdentifier.trim() !== '') {
       return matchBranchId(outlets, targetIdentifier);
     }
-    // 2. Fall back to active selected outlet from OutletContext
+    // 3. Fall back to active selected outlet from OutletContext
     return selectedOutlet ?? null;
-  }, [outlets, selectedOutlet, targetIdentifier]);
+  }, [contextBranch, outlets, selectedOutlet, targetIdentifier]);
 
   const branchId = matchedBranch?.id ?? null;
   const isValidBranch = Boolean(matchedBranch);
@@ -45,8 +53,9 @@ export function useOutletResolver(targetIdentifier?: string | null): OutletResol
     matchedBranch,
     branchId,
     isValidBranch,
-    isLoading,
+    isLoading: isLoading && !contextBranch,
     allOutlets: outlets,
     branchSlug,
   };
 }
+

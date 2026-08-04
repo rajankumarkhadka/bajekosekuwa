@@ -179,7 +179,7 @@ export default function AboutClient() {
                         image=""
                     />
 
-                    <div className="flex flex-col lg:flex-row items-center gap-10 sm:gap-12 lg:gap-16">
+                    <div className="flex px-4 flex-col lg:flex-row items-center gap-10 sm:gap-12 lg:gap-16">
                         <div className="w-full lg:flex-1 space-y-6 sm:space-y-8 lg:space-y-10">
                             <h3 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif text-gray-900">
                                 Bajeko Masala
@@ -206,7 +206,7 @@ export default function AboutClient() {
                         </div>
                     </div>
 
-                    <div className="flex flex-col-reverse lg:flex-row items-center gap-10 sm:gap-12 lg:gap-16">
+                    <div className="flex px-4 flex-col-reverse lg:flex-row items-center gap-10 sm:gap-12 lg:gap-16">
                         <div className="w-full lg:w-auto shrink-0">
                             <Image
                                 src="/images/timmure.png"
@@ -235,7 +235,7 @@ export default function AboutClient() {
                 </div>
             </section>
 
-            <section className="relative py-16 sm:py-20  text-center bg-gradient-to-b from-gray-50 to-gray-100 overflow-hidden">
+            <section className="relative py-16 sm:py-20 px-4 text-center bg-gradient-to-b from-gray-50 to-gray-100 overflow-hidden">
                 <MotionDiv
                     initial={{ opacity: 0, scale: 0.95 }}
                     whileInView={{ opacity: 1, scale: 1 }}

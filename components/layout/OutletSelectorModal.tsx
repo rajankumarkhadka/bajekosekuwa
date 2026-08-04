@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -17,6 +17,7 @@ import Image from 'next/image';
 
 import { useRouter } from 'next/navigation';
 import { getOutletUrlPath } from '@/utils/outletMatcher';
+import { formatFlagUrl } from '@/utils/flag';
 
 interface OutletSelectorModalProps {
   isOpen: boolean;
@@ -25,12 +26,40 @@ interface OutletSelectorModalProps {
 
 const INITIAL_VISIBLE_COUNT = 2; // Shows initial 2 cards as in screenshot, with + Show X more outlets button
 
+function isCountryMatch(countryName: string | undefined | null, category: string): boolean {
+  if (!countryName) return false;
+  const c = countryName.toLowerCase().trim();
+  const cat = category.toLowerCase().trim();
+
+  if (c === cat) return true;
+
+  if (
+    (c === 'uae' || c === 'united arab emirates') &&
+    (cat === 'uae' || cat === 'united arab emirates')
+  ) {
+    return true;
+  }
+
+  if (
+    (c === 'usa' || c === 'united states' || c === 'united states of america') &&
+    (cat === 'usa' || cat === 'united states' || cat === 'united states of america')
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorModalProps) {
   const router = useRouter();
   const {
     outlets,
+    countries,
     selectedOutlet,
     setSelectedOutlet,
+    setSelectedCountryId,
+    searchQuery,
+    setSearchQuery,
     userLocation,
     isLocating,
     locationError,
@@ -40,53 +69,71 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
   } = useOutlet();
 
   const [activeCategory, setActiveCategory] = useState<string>('All');
-  const [searchQuery, setSearchQuery] = useState('');
   const [showAll, setShowAll] = useState(false);
 
-  // Dynamic filter categories (All, Nepal, Batisputali, USA, UAE, Kathmandu, Australia)
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    set.add('All');
 
-    // Add countries
+
+  // Dynamic category items containing label & country flag URL
+  const categoryItems = useMemo(() => {
+    const items: { label: string; flagUrl?: string; countryId?: string }[] = [
+      { label: 'All' }
+    ];
+
+    const countryMap = new Map<string, Country>();
     outlets.forEach((o) => {
-      if (o.country?.name) set.add(o.country.name);
-    });
-
-    // Add highlighted location tags matching screenshot
-    const keyLocations = ['Batisputali', 'Kathmandu'];
-    keyLocations.forEach((loc) => {
-      if (outlets.some((o) => o.name.includes(loc) || o.address.includes(loc))) {
-        set.add(loc);
+      if (o.country?.name && !countryMap.has(o.country.name)) {
+        countryMap.set(o.country.name, o.country);
       }
     });
 
-    return Array.from(set);
-  }, [outlets]);
+    countries.forEach((c) => {
+      if (c.name && !countryMap.has(c.name)) {
+        countryMap.set(c.name, c);
+      }
+    });
 
-  // Filter & sort outlets dynamically
+    countryMap.forEach((country, name) => {
+      items.push({
+        label: name,
+        flagUrl: country.flag_url_4x3 || country.flag_url_1x1,
+        countryId: country.id,
+      });
+    });
+
+    const keyLocations = ['Batisputali', 'Kathmandu'];
+    keyLocations.forEach((loc) => {
+      if (outlets.some((o) => o.name.includes(loc) || o.address.includes(loc))) {
+        if (!items.some((item) => item.label.toLowerCase() === loc.toLowerCase())) {
+          items.push({ label: loc });
+        }
+      }
+    });
+
+    return items;
+  }, [outlets, countries]);
+
+  // Filter & sort outlets dynamically - strictly filter by selected country
   const filteredOutlets = useMemo(() => {
     let result = [...outlets];
 
-    // Category filter
     if (activeCategory !== 'All') {
-      result = result.filter((o) => {
-        const countryMatch = o.country?.name.toLowerCase() === activeCategory.toLowerCase();
-        const nameMatch = o.name.toLowerCase().includes(activeCategory.toLowerCase());
-        const addressMatch = o.address.toLowerCase().includes(activeCategory.toLowerCase());
-        return countryMatch || nameMatch || addressMatch;
-      });
-    }
+      const matchCountry =
+        countries.find((c) => isCountryMatch(c.name, activeCategory)) ||
+        outlets.find((o) => isCountryMatch(o.country?.name, activeCategory))?.country;
 
-    // Search query filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (o) =>
-          o.name.toLowerCase().includes(q) ||
-          o.address.toLowerCase().includes(q) ||
-          (o.country?.name && o.country.name.toLowerCase().includes(q))
-      );
+      if (matchCountry) {
+        result = result.filter(
+          (o) =>
+            o.country?.id === matchCountry.id ||
+            isCountryMatch(o.country?.name, activeCategory)
+        );
+      } else {
+        result = result.filter((o) => {
+          const nameMatch = o.name.toLowerCase().includes(activeCategory.toLowerCase());
+          const addressMatch = o.address.toLowerCase().includes(activeCategory.toLowerCase());
+          return nameMatch || addressMatch;
+        });
+      }
     }
 
     // If user location exists, sort by proximity
@@ -95,7 +142,7 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
     }
 
     return result;
-  }, [outlets, activeCategory, searchQuery, userLocation]);
+  }, [outlets, countries, activeCategory, userLocation]);
 
   // Limit displayed outlets unless "Show more" is clicked
   const visibleOutlets = useMemo(() => {
@@ -107,6 +154,28 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
 
   const hiddenCount = filteredOutlets.length - visibleOutlets.length;
 
+  const handleSelectCategory = (cat: string) => {
+    setActiveCategory(cat);
+    setShowAll(true);
+
+    const foundCountry =
+      countries.find((c) => isCountryMatch(c.name, cat)) ||
+      outlets.find((o) => isCountryMatch(o.country?.name, cat))?.country;
+
+    if (foundCountry) {
+      setSelectedCountryId(foundCountry.id);
+    } else if (cat === 'All') {
+      setSelectedCountryId(null);
+    }
+  };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop - clientHeight < 50 && !isLoading) {
+      loadMoreOutlets();
+    }
+  };
+
   const handleSelectOutlet = (outlet: VendorBranch) => {
     setSelectedOutlet(outlet);
     const targetUrl = getOutletUrlPath(outlet);
@@ -117,7 +186,7 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
   const handleNearMeClick = async () => {
     const nearest = await requestUserLocation();
     if (nearest) {
-      setActiveCategory('All');
+      handleSelectCategory('All');
       setShowAll(true);
     }
   };
@@ -165,7 +234,7 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
           <button
             onClick={handleNearMeClick}
             disabled={isLocating}
-            className="px-3 py-1 bg-[#C4010F] hover:bg-[#a6010d] text-white text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1 shrink-0 disabled:opacity-70 cursor-pointer shadow-2xs"
+            className="px-3 py-1  bg-[#C4010F] hover:bg-[#a6010d] text-white text-[11px] font-bold rounded-full transition-all flex items-center justify-center gap-1 shrink-0 disabled:opacity-70 cursor-pointer shadow-2xs"
           >
             {isLocating ? (
               <>
@@ -197,27 +266,39 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
         )}
 
         <div className="px-5 py-3 bg-white flex items-center gap-2 overflow-x-auto no-scrollbar">
-          {categories.map((cat) => {
-            const isActive = activeCategory === cat;
+          {categoryItems.map((item) => {
+            const isActive = activeCategory === item.label;
+            const formattedFlag = item.flagUrl ? formatFlagUrl(item.flagUrl) : null;
+
             return (
               <button
-                key={cat}
-                onClick={() => {
-                  setActiveCategory(cat);
-                  setShowAll(true);
-                }}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 shrink-0 cursor-pointer ${isActive
+                key={item.label}
+                onClick={() => handleSelectCategory(item.label)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                  isActive
                     ? 'bg-[#C4010F] text-white shadow-2xs'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                }`}
               >
-                {cat}
+                {formattedFlag && (
+                  <div className="relative w-6 h-4 rounded overflow-hidden shrink-0  ">
+                    <Image
+                      src={formattedFlag}
+                      fill
+                      sizes="24px"
+                      alt={item.label}
+                      className="object-contain"
+                      unoptimized={formattedFlag.startsWith('http') || formattedFlag.endsWith('.svg')}
+                    />
+                  </div>
+                )}
+                <span>{item.label}</span>
               </button>
             );
           })}
         </div>
 
-        <div className="px-5 pb-2.5 bg-white">
+        <div className="px-5  pt-1.5 bg-white">
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -230,8 +311,11 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
           </div>
         </div>
 
-        <div className="px-5 py-3 overflow-y-auto flex-1 bg-white space-y-3">
-          {isLoading ? (
+        <div
+          onScroll={handleScroll}
+          className="px-5 py-3 overflow-y-auto flex-1 bg-white space-y-3"
+        >
+          {isLoading && visibleOutlets.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-gray-400">
               <Loader2 className="w-6 h-6 animate-spin text-[#C4010F] mb-1.5" />
               <p className="text-xs font-medium">Loading outlets...</p>

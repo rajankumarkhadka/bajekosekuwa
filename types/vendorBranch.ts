@@ -1,4 +1,4 @@
-import { ApiResponse } from './api';
+import { ApiResponse, PaginatedData } from './api';
 
 /**
  * Country metadata model representing international location details.
@@ -43,5 +43,6 @@ export interface GetVendorBranchesQueryParams {
   page_size?: number;
 }
 
-export type VendorBranchListResponse = ApiResponse<VendorBranch[]>;
+export type VendorBranchListResponse = ApiResponse<PaginatedData<VendorBranch> | VendorBranch[]>;
 export type VendorBranchSingleResponse = ApiResponse<VendorBranch>;
+
