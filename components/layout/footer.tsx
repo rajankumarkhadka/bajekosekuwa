@@ -1,25 +1,95 @@
+'use client';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import MaxWidthWrapper from '@/components/layout/MaxWidthWrapper';
 import { SITE } from '@/data/basic';
 import { InstagramIcon } from '@/components/ui/icon';
 import { NewsletterForm } from '@/components/ui/NewsletterForm';
+import { MapPin, ChevronDown } from 'lucide-react';
+import { useOutlet } from '@/context/OutletContext';
+import { useBranchDetails } from '@/context/BranchDetailsContext';
+import OutletSelectorModal from '@/components/layout/OutletSelectorModal';
+import { getOutletUrlPath } from '@/utils/outletMatcher';
+import { cn } from '@/utils/utils';
 
 export default function Footer() {
+  const { selectedOutlet } = useOutlet();
+  const { branch: contextBranch } = useBranchDetails();
+  const activeOutlet = contextBranch || selectedOutlet;
+  const [isOutletModalOpen, setIsOutletModalOpen] = useState(false);
+
+  const flagUrl = activeOutlet?.country?.flag_url_4x3 || 'https://auth.bajekoshop.com/bajekoshop/flags/4x3/+977.svg';
+  const countryName = activeOutlet?.country?.name || 'Nepal';
+  const outletName = activeOutlet?.name || 'Choose a Location';
+
+  const homeHref = getOutletUrlPath(activeOutlet, '');
+  const aboutHref = getOutletUrlPath(activeOutlet, 'about');
+  const galleryHref = getOutletUrlPath(activeOutlet, 'gallery');
+  const blogHref = getOutletUrlPath(activeOutlet, 'blog');
+  const contactHref = getOutletUrlPath(activeOutlet, 'contact');
+  const menuHref = getOutletUrlPath(activeOutlet, 'menu');
+  const reservationHref = getOutletUrlPath(activeOutlet, 'reservation');
+
   return (
     <div className="bg-white">
       <MaxWidthWrapper className="bg-white text-gray-600 pt-16 pb-0 border-t border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-10 mb-12">
+          {/* Brand & Outlet Selector Column */}
           <div className="xl:col-span-2 space-y-6">
-            <Image
-              src="/images/logo.png"
-              alt={`Logo`}
-              width={400}
-              height={300}
-              className="w-40 md:w-48 h-auto object-contain"
-              priority
-            />
+            <Link href={homeHref} className="inline-block">
+              <Image
+                src="/images/logo.png"
+                alt={`Logo`}
+                width={400}
+                height={300}
+                className="w-40 md:w-48 h-auto object-contain"
+                priority
+              />
+            </Link>
             <p className="text-gray-500 text-sm leading-relaxed max-w-xs">{SITE.description}</p>
+
+            {/* Branch / Outlet Selector Button */}
+            <div className="space-y-2 pt-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-[#C4010F]" />
+                Selected Branch Location
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsOutletModalOpen((prev) => !prev)}
+                className={cn(
+                  "flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 cursor-pointer w-full max-w-xs shadow-2xs group border text-left",
+                  activeOutlet
+                    ? "border-gray-200 hover:border-gray-400 bg-gray-50/80 hover:bg-white"
+                    : "border-[#C4010F]/30 hover:border-[#C4010F] bg-red-50/50"
+                )}
+              >
+                {flagUrl && (
+                  <div className="relative w-6 h-4 rounded overflow-hidden shrink-0 border border-gray-200 shadow-2xs">
+                    <Image
+                      src={flagUrl}
+                      alt={countryName}
+                      fill
+                      sizes="24px"
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                )}
+                <div className="flex flex-col flex-1 min-w-0 leading-tight">
+                  <span className="text-[10px] text-gray-400 font-medium tracking-tight">
+                    {countryName}
+                  </span>
+                  <span className="text-xs font-bold text-gray-900 group-hover:text-[#C4010F] transition-colors truncate">
+                    {outletName}
+                  </span>
+                </div>
+                <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-[#C4010F] transition-colors shrink-0" />
+              </button>
+            </div>
+
             <div className="flex flex-col lg:flex-row gap-6 pt-1">
               <NewsletterForm />
             </div>
@@ -30,7 +100,7 @@ export default function Footer() {
             <ul className="space-y-3.5">
               <li>
                 <Link
-                  href="/"
+                  href={homeHref}
                   className="text-gray-500 font-semibold hover:text-[#C4010F] hover:pl-1 transition-all duration-200 text-sm inline-block"
                 >
                   Home
@@ -38,7 +108,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/about"
+                  href={aboutHref}
                   className="text-gray-500 font-semibold hover:text-[#C4010F] hover:pl-1 transition-all duration-200 text-sm inline-block"
                 >
                   About Us
@@ -46,7 +116,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/gallery"
+                  href={galleryHref}
                   className="text-gray-500 font-semibold hover:text-[#C4010F] hover:pl-1 transition-all duration-200 text-sm inline-block"
                 >
                   Gallery
@@ -54,7 +124,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/blog"
+                  href={blogHref}
                   className="text-gray-500 font-semibold hover:text-[#C4010F] hover:pl-1 transition-all duration-200 text-sm inline-block"
                 >
                   Blog
@@ -62,7 +132,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/contact"
+                  href={contactHref}
                   className="text-gray-500 font-semibold hover:text-[#C4010F] hover:pl-1 transition-all duration-200 text-sm inline-block"
                 >
                   Contact
@@ -75,16 +145,20 @@ export default function Footer() {
             <h4 className="text-xl font-headline font-bold text-gray-900 tracking-tight">Useful Links</h4>
             <ul className="space-y-3.5">
               <li>
-                <Link
-                  href="/outlets"
-                  className="text-gray-500 font-semibold hover:text-[#C4010F] hover:pl-1 transition-all duration-200 text-sm inline-block"
+                <button
+                  type="button"
+                  onClick={() => setIsOutletModalOpen(true)}
+                  className="text-gray-500 font-semibold hover:text-[#C4010F] hover:pl-1 transition-all duration-200 text-sm inline-flex items-center gap-1.5 cursor-pointer"
                 >
-                  Our Outlets
-                </Link>
+                  <span>Our Outlets</span>
+                  <span className="bg-red-100 text-[#C4010F] text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                    Select
+                  </span>
+                </button>
               </li>
               <li>
                 <Link
-                  href="/menu"
+                  href={menuHref}
                   className="text-gray-500 font-semibold hover:text-[#C4010F] hover:pl-1 transition-all duration-200 text-sm inline-block"
                 >
                   Menu
@@ -92,7 +166,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/reservation"
+                  href={reservationHref}
                   className="text-gray-500 font-semibold hover:text-[#C4010F] hover:pl-1 transition-all duration-200 text-sm inline-block"
                 >
                   Reservations
@@ -192,6 +266,12 @@ export default function Footer() {
           </Link>
         </div>
       </MaxWidthWrapper>
+
+      {/* Outlet Selector Modal Triggered From Footer */}
+      <OutletSelectorModal
+        isOpen={isOutletModalOpen}
+        onClose={() => setIsOutletModalOpen(false)}
+      />
     </div>
   );
 }
