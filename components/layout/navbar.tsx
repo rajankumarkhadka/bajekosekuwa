@@ -5,11 +5,12 @@ import Image from "next/image";
 import MaxWidthWrapper from "./MaxWidthWrapper";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calendar, ChevronDown, MapPin, UtensilsCrossed, Menu as MenuIcon, X } from 'lucide-react';
+import { Calendar, ChevronDown, MapPin, UtensilsCrossed, Menu as MenuIcon, X, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from "@/utils/utils";
 import { useOutlet } from "@/context/OutletContext";
 import { useBranchDetails } from "@/context/BranchDetailsContext";
+import { useCart } from "@/context/CartContext";
 
 import { getOutletUrlPath } from "@/utils/outletMatcher";
 
@@ -19,6 +20,7 @@ export default function Navbar() {
     const pathname = usePathname();
     const { selectedOutlet } = useOutlet();
     const { branch: contextBranch } = useBranchDetails();
+    const { totalItems, toggleCart } = useCart();
     const activeOutlet = contextBranch || selectedOutlet;
     const [isOutletModalOpen, setIsOutletModalOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -59,8 +61,8 @@ export default function Navbar() {
                 <MaxWidthWrapper className="mx-auto w-full">
                     <div className="flex justify-between items-center">
                         {/* Left: Brand Logo & Outlet Selector */}
-                        <div className="flex gap-2 sm:gap-3 items-center">
-                            <Link href={homeHref} className="relative w-32 sm:w-36 h-10 sm:h-12 shrink-0">
+                        <div className="flex gap-1 sm:gap-3 items-center">
+                            <Link href={homeHref} className="relative w-24 sm:w-36 h-10 sm:h-12 shrink-0">
                                 <Image src="/images/logo.png" alt="Bajeko Sekuwa Logo" fill sizes="(max-width: 640px) 120px, 150px" className="object-contain" />
                             </Link>
 
@@ -136,11 +138,25 @@ export default function Navbar() {
                         </div>
 
                         {/* Right: Desktop Action Buttons (>= 1024px) */}
-                        <div className="hidden lg:flex items-center gap-3 md:gap-4">
+                        <div className="hidden lg:flex items-center gap-1 md:gap-4">
+                            <button
+                                type="button"
+                                onClick={toggleCart}
+                                className="relative flex items-center justify-center md:w-10 md:h-10 w-8 h-8 rounded-full bg-gray-100 hover:bg-[#C4010F] text-gray-700 hover:text-white transition-all duration-300 shadow-2xs cursor-pointer group"
+                                aria-label="Open Shopping Cart"
+                            >
+                                <ShoppingBag className="w-5 h-5 transition-transform group-hover:scale-110" />
+                                {totalItems > 0 && (
+                                    <span className="absolute -top-1 -right-1 bg-[#C4010F] group-hover:bg-white group-hover:text-[#C4010F] text-white text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center shadow-xs border-2 border-white">
+                                        {totalItems}
+                                    </span>
+                                )}
+                            </button>
+
                             <Link
                                 href={menuHref}
                                 className={cn(
-                                    "inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-xs lg:text-sm tracking-wide transition-all duration-300 shadow-xs",
+                                    "inline-flex items-center gap-2 md:px-5 px-2 py-2.5 md:py-2.5 rounded-full font-bold text-xs lg:text-sm tracking-wide transition-all duration-300 shadow-xs",
                                     isMenuActive
                                         ? "bg-[#ca8908] text-white shadow-md ring-2 ring-[#E79C1E]/50"
                                         : "bg-[#E79C1E] text-white hover:bg-[#ca8908] hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
@@ -164,8 +180,22 @@ export default function Navbar() {
                             </Link>
                         </div>
 
-                        {/* Mobile Hamburger Button (< 1024px / < lg) */}
+                        {/* Mobile Hamburger & Cart Button (< 1024px / < lg) */}
                         <div className="flex lg:hidden items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={toggleCart}
+                                className="relative p-2 rounded-lg text-gray-700 hover:text-[#C4010F] hover:bg-gray-100 transition-colors cursor-pointer"
+                                aria-label="Open Shopping Cart"
+                            >
+                                <ShoppingBag className="w-6 h-6" />
+                                {totalItems > 0 && (
+                                    <span className="absolute top-1 right-1 bg-[#C4010F] text-white text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
+                                        {totalItems}
+                                    </span>
+                                )}
+                            </button>
+
                             <button
                                 onClick={() => {
                                     setIsMobileMenuOpen((prev) => !prev);

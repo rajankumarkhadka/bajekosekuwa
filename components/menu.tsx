@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useActiveOutletMenu } from '@/api/hooks/useBranchMenu';
 import SafeImage from '@/components/ui/SafeImage';
-import { MapPin, Utensils, Sparkles } from 'lucide-react';
+import { MapPin, Utensils, Sparkles, Plus, Minus, ShoppingBag } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
 
 export interface DisplayMenuItem {
   id: string; // product_id
@@ -23,6 +24,7 @@ export interface DisplayMenuItem {
 export default function MenuComponent() {
   const params = useParams();
   const routeBranch = typeof params?.branch === 'string' ? params.branch : null;
+  const { cartItems, addToCart, updateQuantity, toggleCart, totalItems, subtotal } = useCart();
 
   // Step 1: Fetch Menu data using resolved branch_id -> menu_id -> product_id pipeline
   const {
@@ -126,12 +128,28 @@ export default function MenuComponent() {
           </div>
         </div>
 
-        {menuData?.id && (
-          <div className="flex items-center gap-2 text-xs font-medium text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-200">
-            <Sparkles className="w-3.5 h-3.5 text-[#C4010F]" />
-            <span>Menu ID: {menuData.id.slice(0, 8)}...</span>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {totalItems > 0 && (
+            <button
+              type="button"
+              onClick={toggleCart}
+              className="flex items-center gap-2 px-4 py-2 bg-[#C4010F] text-white text-xs font-bold rounded-xl shadow-md hover:bg-[#a6000c] transition-all cursor-pointer animate-in fade-in"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span>View Cart ({totalItems})</span>
+              <span className="bg-white/20 px-2 py-0.5 rounded-full text-[10px]">
+                Rs. {subtotal.toFixed(2)}
+              </span>
+            </button>
+          )}
+
+          {menuData?.id && (
+            <div className="flex items-center gap-2 text-xs font-medium text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-200">
+              <Sparkles className="w-3.5 h-3.5 text-[#C4010F]" />
+              <span>Menu ID: {menuData.id.slice(0, 8)}...</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Filter Tabs & Veg Toggles */}
@@ -224,6 +242,7 @@ export default function MenuComponent() {
             {filteredItems.map((item) => {
               const isVeg = item.isVeg;
               const isSolidBg = item.isRecommended;
+              const cartQuantity = cartItems.find((i) => i.id === item.id)?.quantity || 0;
 
               return (
                 <motion.div
@@ -286,18 +305,57 @@ export default function MenuComponent() {
                         Rs. {item.price.toFixed(2)}
                       </span>
 
-                      <button
-                        type="button"
-                        className={`font-bold text-xs px-3 py-1.5 rounded-md flex items-center gap-1 transition-colors active:scale-95 shadow-xs ${
-                          isSolidBg
-                            ? 'bg-white/20 hover:bg-white hover:text-gray-900 text-white'
-                            : isVeg
-                            ? 'bg-[#f59e0b] hover:bg-[#d97706] text-white group-hover:bg-white/20 group-hover:hover:bg-white group-hover:hover:text-[#2e7d32]'
-                            : 'bg-[#f59e0b] hover:bg-[#d97706] text-white group-hover:bg-white/20 group-hover:hover:bg-white group-hover:hover:text-[#C4010F]'
-                        }`}
-                      >
-                        <span>+ Order</span>
-                      </button>
+                      {cartQuantity > 0 ? (
+                        <div className="flex items-center gap-1.5 bg-[#C4010F] text-white rounded-lg p-1 shadow-xs z-20">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateQuantity(item.id, -1);
+                            }}
+                            className="w-5 h-5 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center font-bold text-xs cursor-pointer"
+                          >
+                            <Minus className="w-3 h-3 text-white" />
+                          </button>
+                          <span className="font-bold text-xs px-1 min-w-[14px] text-center text-white">
+                            {cartQuantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateQuantity(item.id, 1);
+                            }}
+                            className="w-5 h-5 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center font-bold text-xs cursor-pointer"
+                          >
+                            <Plus className="w-3 h-3 text-white" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart({
+                              id: item.id,
+                              name: item.name,
+                              price: item.price,
+                              image: item.image,
+                              isVeg: item.isVeg,
+                              categoryTitle: item.categoryTitle,
+                            });
+                          }}
+                          className={`font-bold text-xs px-3 py-1.5 rounded-md flex items-center gap-1 transition-colors active:scale-95 shadow-xs cursor-pointer ${
+                            isSolidBg
+                              ? 'bg-white/20 hover:bg-white hover:text-gray-900 text-white'
+                              : isVeg
+                              ? 'bg-[#f59e0b] hover:bg-[#d97706] text-white group-hover:bg-white/20 group-hover:hover:bg-white group-hover:hover:text-[#2e7d32]'
+                              : 'bg-[#f59e0b] hover:bg-[#d97706] text-white group-hover:bg-white/20 group-hover:hover:bg-white group-hover:hover:text-[#C4010F]'
+                          }`}
+                        >
+                          <span>+ Add to Cart</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </motion.div>

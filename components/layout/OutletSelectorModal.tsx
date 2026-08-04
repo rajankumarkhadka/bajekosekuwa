@@ -112,7 +112,7 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
     return items;
   }, [outlets, countries]);
 
-  // Filter & sort outlets dynamically - strictly filter by selected country
+  // Filter & sort outlets dynamically - strictly filter by selected country and search query
   const filteredOutlets = useMemo(() => {
     let result = [...outlets];
 
@@ -136,13 +136,23 @@ export default function OutletSelectorModal({ isOpen, onClose }: OutletSelectorM
       }
     }
 
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(
+        (o) =>
+          o.name.toLowerCase().includes(q) ||
+          (o.address && o.address.toLowerCase().includes(q)) ||
+          (o.country?.name && o.country.name.toLowerCase().includes(q))
+      );
+    }
+
     // If user location exists, sort by proximity
     if (userLocation) {
       result.sort((a, b) => (a.distance_km ?? 99999) - (b.distance_km ?? 99999));
     }
 
     return result;
-  }, [outlets, countries, activeCategory, userLocation]);
+  }, [outlets, countries, activeCategory, userLocation, searchQuery]);
 
   // Limit displayed outlets unless "Show more" is clicked
   const visibleOutlets = useMemo(() => {
