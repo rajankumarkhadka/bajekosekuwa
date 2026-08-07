@@ -243,15 +243,7 @@ export default function AboutClient() {
                     transition={{ duration: 1 }}
                     className="max-w-4xl mx-auto space-y-24 relative z-10"
                 >
-                    {/* <div className="flex items-center justify-center gap-4">
-                        <div className="w-8 h-px bg-[#C4010F]" />
-                        <span className="text-[10px] tracking-[0.30em] uppercase text-[#C4010F] font-bold">Join The Legacy</span>
-                        <div className="w-8 h-px bg-[#C4010F]" />
-                    </div>
-                    <h2 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-serif text-gray-900 leading-[1.1] md:leading-[0.95] tracking-tight">
-                        Experience the <br />
-                        <em className="italic text-[#C4010F]">Heritage.</em>
-                    </h2> */}
+                    
                     <Banner
                         subtitle="Join The Legacy"
                         title={["Experience the ", "Heritage"]}

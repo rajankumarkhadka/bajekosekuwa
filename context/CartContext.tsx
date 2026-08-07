@@ -42,7 +42,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize carts from localStorage on client mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -65,7 +64,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Save carts to localStorage whenever cartsByOutlet updates
   useEffect(() => {
     if (!isInitialized || typeof window === 'undefined') return;
     try {

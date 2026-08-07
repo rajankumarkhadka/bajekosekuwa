@@ -1,8 +1,6 @@
 import { z } from 'zod';
 
-/**
- * Contact Form validation schema built using Zod.
- */
+
 export const contactSchema = z.object({
   name: z
     .string()

@@ -98,7 +98,6 @@ export function OutletProvider({ children }: { children: React.ReactNode }) {
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [locationError, setLocationError] = useState<string | null>(null);
 
-  // Extract unique countries dynamically from API data
   const countries = useMemo(() => {
     const list: Country[] = [];
     rawOutlets.forEach((o) => {
@@ -109,7 +108,6 @@ export function OutletProvider({ children }: { children: React.ReactNode }) {
     return list;
   }, [rawOutlets]);
 
-  // Compute outlets with distance if user location is available
   const outlets = useMemo(() => {
     if (!userLocation) return rawOutlets;
 
@@ -161,7 +159,6 @@ export function OutletProvider({ children }: { children: React.ReactNode }) {
     setSelectedOutlet(null);
   };
 
-  // Geolocation trigger function: asks location permission, calculates nearest outlet, sorts and selects nearest first
   const requestUserLocation = async (): Promise<VendorBranch | null> => {
     setIsLocating(true);
     setLocationError(null);

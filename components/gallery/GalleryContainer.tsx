@@ -120,10 +120,8 @@ export default function GalleryContainer() {
                 fallbackSrc="/images/icon.jpg"
               />
 
-              {/* Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
 
-              {/* Category Tag */}
               {item.category && (
                 <div className="absolute top-4 left-4 z-10">
                   <span className="bg-black/60 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1 rounded-full border border-white/20">
@@ -132,14 +130,12 @@ export default function GalleryContainer() {
                 </div>
               )}
 
-              {/* Hover Zoom Icon */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
                 <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center text-white transform group-hover:scale-110 transition-transform">
                   <ZoomIn className="w-6 h-6" />
                 </div>
               </div>
 
-              {/* Bottom Details */}
               <div className="absolute bottom-0 left-0 right-0 p-5 z-10 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                 {item.title && (
                   <h4 className="text-white text-base font-bold tracking-tight line-clamp-1 drop-shadow-md">
@@ -161,7 +157,6 @@ export default function GalleryContainer() {
         </div>
       )}
 
-      {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="mt-14 flex items-center justify-center gap-2">
           <button
@@ -196,7 +191,6 @@ export default function GalleryContainer() {
         </div>
       )}
 
-      {/* Fullscreen Lightbox Modal */}
       <AnimatePresence>
         {lightboxItem && (
           <motion.div

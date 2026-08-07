@@ -187,7 +187,6 @@ export default function CartDrawer() {
                 )}
               </div>
 
-              {/* Drawer Footer */}
               {cartItems.length > 0 && (
                 <div className="p-5 border-t border-gray-100 bg-gray-50/50 flex flex-col gap-4">
                   <div className="flex items-center justify-between text-xs text-gray-500">
