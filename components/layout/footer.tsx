@@ -7,12 +7,10 @@ import MaxWidthWrapper from '@/components/layout/MaxWidthWrapper';
 import { SITE } from '@/data/basic';
 import { InstagramIcon } from '@/components/ui/icon';
 import { NewsletterForm } from '@/components/ui/NewsletterForm';
-import { MapPin, ChevronDown } from 'lucide-react';
 import { useOutlet } from '@/context/OutletContext';
 import { useBranchDetails } from '@/context/BranchDetailsContext';
 import OutletSelectorModal from '@/components/layout/OutletSelectorModal';
 import { getOutletUrlPath } from '@/utils/outletMatcher';
-import { cn } from '@/utils/utils';
 
 export default function Footer() {
   const { selectedOutlet } = useOutlet();
@@ -21,8 +19,6 @@ export default function Footer() {
   const [isOutletModalOpen, setIsOutletModalOpen] = useState(false);
 
   const flagUrl = activeOutlet?.country?.flag_url_4x3 || 'https://auth.bajekoshop.com/bajekoshop/flags/4x3/+977.svg';
-  const countryName = activeOutlet?.country?.name || 'Nepal';
-  const outletName = activeOutlet?.name || 'Choose a Location';
 
   const homeHref = getOutletUrlPath(activeOutlet, '');
   const aboutHref = getOutletUrlPath(activeOutlet, 'about');
@@ -51,7 +47,7 @@ export default function Footer() {
             <p className="text-gray-500 text-sm leading-relaxed max-w-xs">{SITE.description}</p>
 
             {/* Branch / Outlet Selector Button */}
-            <div className="space-y-2 pt-1">
+            {/* <div className="space-y-2 pt-1">
               <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1">
                 <MapPin className="w-3 h-3 text-[#C4010F]" />
                 Selected Branch Location
@@ -88,7 +84,7 @@ export default function Footer() {
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-[#C4010F] transition-colors shrink-0" />
               </button>
-            </div>
+            </div> */}
 
             <div className="flex flex-col lg:flex-row gap-6 pt-1">
               <NewsletterForm />
@@ -266,8 +262,6 @@ export default function Footer() {
           </Link>
         </div>
       </MaxWidthWrapper>
-
-      {/* Outlet Selector Modal Triggered From Footer */}
       <OutletSelectorModal
         isOpen={isOutletModalOpen}
         onClose={() => setIsOutletModalOpen(false)}

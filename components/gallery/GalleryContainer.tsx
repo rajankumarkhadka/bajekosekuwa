@@ -112,7 +112,7 @@ export default function GalleryContainer() {
               onClick={() => setLightboxItem(item)}
             >
               <SafeImage
-                src={item.image_url || item.image}
+                src={item.image}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 alt={item.title || item.description || 'Gallery item'}

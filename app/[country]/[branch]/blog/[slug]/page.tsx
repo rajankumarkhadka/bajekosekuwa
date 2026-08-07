@@ -53,9 +53,26 @@ export async function generateMetadata({ params }: OutletBlogDetailProps): Promi
     : 'Outlet';
 
   if (cmsArticle) {
+    const title = cmsArticle.seo_title || `${cmsArticle.title} | ${branchName} Outlet | Bajeko Sekuwa Blog`;
+    const description = cmsArticle.seo_description || cmsArticle.excerpt || cmsArticle.title;
+    const rawSeoImage = cmsArticle.seo_image || cmsArticle.featured_image;
+    const seoImage = rawSeoImage ? cleanImageUrl(rawSeoImage, '') : undefined;
     return {
-      title: `${cmsArticle.title} | ${branchName} Outlet | Bajeko Sekuwa Blog`,
-      description: cmsArticle.excerpt || cmsArticle.title,
+      title,
+      description,
+      ...(seoImage && {
+        openGraph: {
+          title,
+          description,
+          images: [{ url: seoImage }],
+        },
+        twitter: {
+          card: 'summary_large_image',
+          title,
+          description,
+          images: [seoImage],
+        },
+      }),
     };
   }
   return {
@@ -74,22 +91,10 @@ export default async function OutletBlogDetailView({ params }: OutletBlogDetailP
   }
 
   const title = cmsArticle.title || '';
-  const rawImage =
-    cmsArticle.featured_image && typeof cmsArticle.featured_image === 'object'
-      ? cmsArticle.featured_image.url
-      : typeof cmsArticle.featured_image === 'string'
-        ? cmsArticle.featured_image
-        : '/images/icon.jpg';
+  const rawImage = cmsArticle.featured_image || '/images/icon.jpg';
   const image = cleanImageUrl(rawImage, '/images/icon.jpg');
 
-  const author =
-    cmsArticle.author && typeof cmsArticle.author === 'object'
-      ? cmsArticle.author.name && cmsArticle.author.name !== 'Unknown'
-        ? cmsArticle.author.name
-        : 'Bajeko Team'
-      : typeof cmsArticle.author === 'string' && cmsArticle.author !== 'Unknown'
-        ? cmsArticle.author
-        : 'Bajeko Team';
+  const author = 'Bajeko Team';
 
   const rawDate = cmsArticle.created_at || cmsArticle.published_at;
   const date = rawDate
@@ -101,7 +106,7 @@ export default async function OutletBlogDetailView({ params }: OutletBlogDetailP
     : 'Recent';
 
   const htmlContent = cmsArticle.content || null;
-  const excerpt = cmsArticle.excerpt || cmsArticle.summary || '';
+  const excerpt = cmsArticle.excerpt || '';
 
   const backLink = `/${country}/${branch}/blog`;
 

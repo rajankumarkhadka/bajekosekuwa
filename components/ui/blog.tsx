@@ -19,31 +19,14 @@ function stripHtml(html?: string): string {
 
 function getImageSrc(item: {
     featured_image?: { url: string } | string;
-    image?: string;
-    thumbnail?: string;
 }): string {
     let rawUrl = '';
-    if (item.featured_image && typeof item.featured_image === 'object' && item.featured_image.url) {
-        rawUrl = item.featured_image.url;
-    } else if (typeof item.featured_image === 'string' && item.featured_image) {
+    if (typeof item.featured_image === 'string') {
         rawUrl = item.featured_image;
-    } else if (item.image) {
-        rawUrl = item.image;
-    } else if (item.thumbnail) {
-        rawUrl = item.thumbnail;
+    } else if (item.featured_image && typeof item.featured_image === 'object' && item.featured_image.url) {
+        rawUrl = item.featured_image.url;
     }
     return cleanImageUrl(rawUrl, '/images/icon.jpg');
-}
-
-function getAuthorName(author?: { name?: string } | string): string {
-    if (!author) return 'Bajeko Team';
-    if (typeof author === 'object' && author.name) {
-        return author.name === 'Unknown' ? 'Bajeko Team' : author.name;
-    }
-    if (typeof author === 'string' && author.trim()) {
-        return author === 'Unknown' ? 'Bajeko Team' : author;
-    }
-    return 'Bajeko Team';
 }
 
 export default function BlogClient() {
@@ -131,9 +114,9 @@ export default function BlogClient() {
 
         return apiArticles.map((art) => {
             const imageUrl = getImageSrc(art);
-            const authorName = getAuthorName(art.author);
+            const authorName = 'Bajeko Team';
             const cleanContent = stripHtml(art.content);
-            const rawExcerpt = art.excerpt || art.summary || cleanContent;
+            const rawExcerpt = art.excerpt || cleanContent;
             const truncatedExcerpt =
                 rawExcerpt.length > 140 ? rawExcerpt.slice(0, 140) + '...' : rawExcerpt;
 
@@ -146,25 +129,12 @@ export default function BlogClient() {
                 })
                 : 'Recent';
 
-            let categoryId = art.category_id || '';
-            if (!categoryId && typeof art.category === 'object' && art.category?.id) {
-                categoryId = art.category.id;
-            } else if (!categoryId && typeof art.category === 'string') {
-                categoryId = art.category;
-            }
+            const categoryIds = Array.isArray(art.category_ids) ? art.category_ids : [];
+            const categoryId = categoryIds.length > 0 ? categoryIds[0] : '';
 
             let categoryName = 'Articles';
-            if (typeof art.category === 'object' && art.category?.name) {
-                categoryName = art.category.name;
-            } else if (categoryId && categoryMap.has(categoryId)) {
+            if (categoryId && categoryMap.has(categoryId)) {
                 categoryName = categoryMap.get(categoryId)!;
-            } else if (typeof art.category === 'string' && art.category.trim()) {
-                const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(art.category.trim());
-                if (!isUuid) {
-                    categoryName = art.category.trim();
-                } else if (categoryMap.has(art.category.trim())) {
-                    categoryName = categoryMap.get(art.category.trim())!;
-                }
             }
 
             const articleSlug = art.slug || art.id || '';
@@ -173,13 +143,14 @@ export default function BlogClient() {
                 id: articleSlug || 'article',
                 title: art.title,
                 slug: articleSlug,
-                image: imageUrl,
+                featured_image: imageUrl,
                 excerpt: truncatedExcerpt,
                 description: truncatedExcerpt,
                 date: formattedDate,
                 readTime: '3 min read',
                 category: categoryName,
                 categoryId: categoryId,
+                categoryIds: categoryIds,
                 author: authorName,
                 customUrl: getPostUrl(articleSlug),
             };
@@ -201,12 +172,15 @@ export default function BlogClient() {
         const matches = mappedPosts.filter((post) => {
             const postCatLower = post.category.toLowerCase();
             const postCatIdLower = post.categoryId.toLowerCase();
+            const postCatIdsList = (post.categoryIds || []).map((id) => id.toLowerCase());
 
             return (
                 postCatIdLower === targetId ||
                 postCatIdLower === targetSlug ||
                 postCatLower === targetName ||
-                postCatLower === targetSlug
+                postCatLower === targetSlug ||
+                postCatIdsList.includes(targetId) ||
+                postCatIdsList.includes(targetSlug)
             );
         });
 
@@ -231,7 +205,7 @@ export default function BlogClient() {
                         >
                             <motion.div className="w-full lg:w-1/2 relative aspect-[16/10] sm:aspect-[16/10] rounded-lg overflow-hidden shadow-md" whileHover={{ scale: 1.02 }}>
                                 <SafeImage
-                                    src={featuredPost.image}
+                                    src={featuredPost.featured_image}
                                     alt={featuredPost.title}
                                     fill
                                     className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
@@ -321,7 +295,7 @@ export default function BlogClient() {
                                     whileHover={{ scale: 1.02 }}
                                 >
                                     <SafeImage
-                                        src={post.image}
+                                        src={post.featured_image}
                                         alt={post.title}
                                         fill
                                         className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
